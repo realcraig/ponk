@@ -21,7 +21,8 @@ const Ball = forwardRef(({ gameRef, courtRef, leftPaddleRef, rightPaddleRef }, r
         src: ['/sounds/plink.mp3']
     });
     const missSound = new Howl({
-        src: ['/sounds/miss.mp3']
+        src: ['/sounds/miss.mp3'],
+        volume: 0.3
     });
 
     const [ballPosition, setBallPosition] = useState([0, 0, 0]);
@@ -31,6 +32,9 @@ const Ball = forwardRef(({ gameRef, courtRef, leftPaddleRef, rightPaddleRef }, r
     useEffect(() => {
         const handleKeyDown = (event) => {
         if (event.key === " " && !playing) {
+            if (!gameRef.current.isGameStarted()) {
+                gameRef.current.startGame();
+            }
             setBallVelocity(getRandomVelocity());
             setPlaying(true);
         }
@@ -44,16 +48,16 @@ const Ball = forwardRef(({ gameRef, courtRef, leftPaddleRef, rightPaddleRef }, r
 
     useFrame(() => {
         if (ballPosition[0] + ballRadius >= courtRef.current.getRight() || 
-        ballPosition[0] - ballRadius <= courtRef.current.getLeft()) {
-        setBallPosition([0, 0, 0]);
-        setBallVelocity([0, 0, 0]);
-        setPlaying(false);
-        if (ballPosition[0] + ballRadius >= courtRef.current.getRight()) {
-            gameRef.current.incrementLeftScore();
-        } else {
-            gameRef.current.incrementRightScore();
-        }
-        missSound.play();
+            ballPosition[0] - ballRadius <= courtRef.current.getLeft()) {
+            setBallPosition([0, 0, 0]);
+            setBallVelocity([0, 0, 0]);
+            setPlaying(false);
+            if (ballPosition[0] + ballRadius >= courtRef.current.getRight()) {
+                gameRef.current.incrementLeftScore();
+            } else {
+                gameRef.current.incrementRightScore();
+            }
+            missSound.play();
         }
         else {
         // Check for collision with top wall

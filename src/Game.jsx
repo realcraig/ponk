@@ -1,4 +1,5 @@
 import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useFrame } from '@react-three/fiber';
 
 import { Paddle } from "./Paddle";
 import Court from "./Court";
@@ -12,6 +13,12 @@ export const Game = forwardRef((_props, ref) => {
     const courtRef = useRef();
     const [leftScore, setLeftScore] = useState(0);
     const [rightScore, setRightScore] = useState(0);
+    const [gameStarted, setGameStarted] = useState(false);
+
+    function resetScore() {
+        setLeftScore(0);
+        setRightScore(0);
+    }
 
     useImperativeHandle(ref, () => ({        
         incrementLeftScore: () => {
@@ -21,10 +28,22 @@ export const Game = forwardRef((_props, ref) => {
             setRightScore(rightScore + 1);
         },
         resetScore: () => {
-            setLeftScore(0);
-            setRightScore(0);
+            resetScore();
+        },
+        isGameStarted: () => {
+            return gameStarted;
+        },  
+        startGame: () => {
+            resetScore();
+            setGameStarted(true);
         }
     }));
+
+    useFrame(() => {
+        if (leftScore >= 11 && rightScore < (leftScore - 1) || rightScore >= 11 && leftScore < (rightScore - 1)) {
+            setGameStarted(false);
+        }
+    });
 
     return (
         <group>
