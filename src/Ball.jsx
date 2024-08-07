@@ -3,16 +3,6 @@ import { useFrame } from '@react-three/fiber';
 import {Howl, Howler} from 'howler';
 import PropTypes from 'prop-types'; 
 
-function getRandomFloat(min, max) {
-    return Math.random() * (max - min) + min;
-}
-
-function getRandomVelocity() {
-    const angle = getRandomFloat(-Math.PI / 4, Math.PI / 4);
-    const speed = (Math.random() < 0.5 ? -1 : 1) * getRandomFloat(0.05, 0.06);
-
-    return [speed * Math.cos(angle), speed * Math.sin(angle), 0];
-}
 
 const Ball = forwardRef(({ gameRef, courtRef, leftPaddleRef, rightPaddleRef }, ref) =>  {
     const ballRadius = 0.15;
@@ -27,37 +17,27 @@ const Ball = forwardRef(({ gameRef, courtRef, leftPaddleRef, rightPaddleRef }, r
 
     const [ballPosition, setBallPosition] = useState([0, 0, 0]);
     const [ballVelocity, setBallVelocity] = useState([0, 0, 0]);
-    const [playing, setPlaying] = useState(false);
 
-    useEffect(() => {
-        const handleKeyDown = (event) => {
-        if (event.key === " " && !playing) {
-            if (!gameRef.current.isGameStarted()) {
-                gameRef.current.startGame();
-            }
-            setBallVelocity(getRandomVelocity());
-            setPlaying(true);
-        }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-
-        return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [playing, ballVelocity]);
+    useImperativeHandle(ref, () => ({        
+        setVelocity: (velocity) => {
+            setBallVelocity(velocity);
+        },
+    }));
 
     useFrame(() => {
         if (ballPosition[0] + ballRadius >= courtRef.current.getRight() || 
             ballPosition[0] - ballRadius <= courtRef.current.getLeft()) {
             setBallPosition([0, 0, 0]);
             setBallVelocity([0, 0, 0]);
-            setPlaying(false);
+
             if (ballPosition[0] + ballRadius >= courtRef.current.getRight()) {
                 gameRef.current.incrementLeftScore();
             } else {
                 gameRef.current.incrementRightScore();
             }
             missSound.play();
+
+            gameRef.current.pointOver();
         }
         else {
         // Check for collision with top wall
@@ -87,8 +67,8 @@ const Ball = forwardRef(({ gameRef, courtRef, leftPaddleRef, rightPaddleRef }, r
 
     return (
         <mesh position={ballPosition}>
-        <sphereGeometry args={[ballRadius]} />
-        <meshStandardMaterial color="white" />
+            <sphereGeometry args={[ballRadius]} />
+            <meshStandardMaterial color="white" />
         </mesh>
     );
 });
