@@ -6,7 +6,7 @@ export const Paddle = forwardRef(({ control, paddleX, courtRef, ...props }, ref)
   const paddleWidth = 0.2;
   const paddleDepth = 0.2;
   const paddleBuffer = 0.32;
-  const missBuffer = 2;
+  
   const side = paddleX > 0 ? "right" : "left";
   const [paddleY, setPaddleY] = useState(0);
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import {Howl, Howler} from 'howler';
 import { Paddle } from "./Paddle";
 import Court from "./Court";
+import ScoreBoard from "./ScoreBoard";
 const ballRadius = 0.15;
 
 
@@ -24,10 +25,15 @@ function Ball({ courtRef, leftPaddleRef, rightPaddleRef }) {
   const plinkSound = new Howl({
     src: ['/sounds/plink.mp3']
   });
+  const missSound = new Howl({
+    src: ['/sounds/miss.mp3']
+  });
   
   const [ballPosition, setBallPosition] = useState([0, 0, 0]);
   const [ballVelocity, setBallVelocity] = useState([0, 0, 0]);
   const [playing, setPlaying] = useState(false);
+  const [leftScore, setLeftScore] = useState(0);
+  const [rightScore, setRightScore] = useState(0);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -49,6 +55,12 @@ function Ball({ courtRef, leftPaddleRef, rightPaddleRef }) {
       setBallPosition([0, 0, 0]);
       setBallVelocity([0, 0, 0]);
       setPlaying(false);
+      if (ballPosition[0] + ballRadius >= courtRef.current.getRight()) {
+        courtRef.current.incrementLeftScore();
+      } else {
+        courtRef.current.incrementRightScore();
+      }
+      missSound.play();
     }
     else {
       // Check for collision with top wall
@@ -90,13 +102,11 @@ function App() {
   const rightPaddleRef = useRef();
   const courtRef = useRef();
 
-  
-
-
   return (
     <Canvas style={{ background: "#000" }}>
       <OrthographicCamera makeDefault position={[0, 0, 1]} lookAt={[0, 0, 0]} zoom={100}/>
       <Court ref={courtRef} />
+     
       <ambientLight intensity={0.5} />
       <directionalLight position={[0, 0, 10]} intensity={0.5} />
       <pointLight position={[0, 0, 2]} intensity={50} color="white" />
