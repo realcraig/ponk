@@ -1,9 +1,8 @@
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrthographicCamera } from "@react-three/drei";
-import { useState, useEffect, useRef, forwardRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Paddle } from "./Paddle";
-
-const wallThickness = 0.2;
+import Court from "./Court";
 const ballRadius = 0.15;
 
 
@@ -18,7 +17,7 @@ function getRandomVelocity() {
   return [speed * Math.cos(angle), speed * Math.sin(angle), 0];
 }
 
-function Ball({ topWallRef, bottomWallRef, leftPaddleRef, rightPaddleRef }) {
+function Ball({ courtRef, leftPaddleRef, rightPaddleRef }) {
   
   const [ballPosition, setBallPosition] = useState([0, 0, 0]);
   const [ballVelocity, setBallVelocity] = useState([0, 0, 0]);
@@ -39,18 +38,19 @@ function Ball({ topWallRef, bottomWallRef, leftPaddleRef, rightPaddleRef }) {
   }, [playing, ballVelocity]);
 
   useFrame(() => {
-    if (leftPaddleRef.current.missedBall(ballPosition) || rightPaddleRef.current.missedBall(ballPosition)) {
+    if (ballPosition[0] + ballRadius >= courtRef.current.getRight() || 
+      ballPosition[0] - ballRadius <= courtRef.current.getLeft()) {
       setBallPosition([0, 0, 0]);
       setBallVelocity([0, 0, 0]);
       setPlaying(false);
     }
     else {
       // Check for collision with top wall
-      if (ballPosition[1] + ballRadius >= topWallRef.current.position.y - wallThickness / 2) {
+      if (ballPosition[1] + ballRadius >= courtRef.current.getTop()) {
         setBallVelocity([ballVelocity[0], -Math.abs(ballVelocity[1]), ballVelocity[2]]);
       }
       // Check for collision with bottom wall
-      else if (ballPosition[1] - ballRadius <= bottomWallRef.current.position.y + wallThickness / 2) {
+      else if (ballPosition[1] - ballRadius <= courtRef.current.getBottom()) {
         setBallVelocity([ballVelocity[0], Math.abs(ballVelocity[1]), ballVelocity[2]]);
       }
       // Check for collision with left paddle
@@ -76,38 +76,27 @@ function Ball({ topWallRef, bottomWallRef, leftPaddleRef, rightPaddleRef }) {
 
 
 function App() {
-  const topWallRef = useRef();
-  const bottomWallRef = useRef();
   const leftPaddleRef = useRef();
   const rightPaddleRef = useRef();
+  const courtRef = useRef();
 
   return (
     <Canvas style={{ background: "#000" }}>
       <OrthographicCamera makeDefault position={[0, 0, 1]} lookAt={[0, 0, 0]} zoom={100}/>
+      <Court ref={courtRef} />
       <ambientLight intensity={0.5} />
       <directionalLight position={[0, 0, 10]} intensity={0.5} />
+      <pointLight position={[0, 0, 2]} intensity={50} color="white" />
 
       {/* Left Paddle */}
-      <Paddle ref={leftPaddleRef} paddleX={-4} control="mouse" topWallRef={topWallRef} bottomWallRef={bottomWallRef} />
+      <Paddle ref={leftPaddleRef} paddleX={-4} control="mouse" courtRef={courtRef} />
       
       {/* Right Paddle */}
-      <Paddle ref={rightPaddleRef} paddleX={4} control="keyboard" topWallRef={topWallRef} bottomWallRef={bottomWallRef} />
+      <Paddle ref={rightPaddleRef} paddleX={4} control="keyboard" courtRef={courtRef} />
 
       {/* Ball */}
-      <Ball topWallRef={topWallRef} bottomWallRef={bottomWallRef} leftPaddleRef={leftPaddleRef} rightPaddleRef={rightPaddleRef} />
-      
-
-      {/* Top Wall */}
-      <mesh ref={topWallRef} position={[0, 2.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <boxGeometry args={[10, wallThickness, wallThickness]} />
-        <meshStandardMaterial color="white" />
-      </mesh>
-      
-      {/* Bottom Wall */}
-      <mesh ref={bottomWallRef} position={[0, -2.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <boxGeometry args={[10, wallThickness, wallThickness]} />
-        <meshStandardMaterial color="white" />
-      </mesh>
+      <Ball courtRef={courtRef} leftPaddleRef={leftPaddleRef} rightPaddleRef={rightPaddleRef} />
+    
     </Canvas>
   );
 }

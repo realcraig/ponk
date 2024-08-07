@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import PropTypes from 'prop-types';
 
-export const Paddle = forwardRef(({ control, paddleX, topWallRef, bottomWallRef, ...props }, ref) => {
-  const paddleHeight = 1.5;
+export const Paddle = forwardRef(({ control, paddleX, courtRef, ...props }, ref) => {
+  const paddleHeight = 1;
   const paddleWidth = 0.2;
   const paddleDepth = 0.2;
+  const paddleBuffer = 0.32;
   const missBuffer = 2;
   const side = paddleX > 0 ? "right" : "left";
   const [paddleY, setPaddleY] = useState(0);
@@ -12,18 +13,17 @@ export const Paddle = forwardRef(({ control, paddleX, topWallRef, bottomWallRef,
   const movePaddle = useCallback((delta) => {
     setPaddleY((prevY) => {
       const newY = prevY + delta;
-      if (topWallRef.current && bottomWallRef.current) {
-        const wallThickness = topWallRef.current.geometry.parameters.height;
-        const topLimit = topWallRef.current.position.y - paddleHeight/2 - wallThickness/2;
-        const bottomLimit = bottomWallRef.current.position.y + paddleHeight/2 + wallThickness/2;
-        return Math.max(bottomLimit, Math.min(topLimit, newY));
+      if (courtRef.current) {
+        return Math.max(courtRef.current.getBottom() + paddleHeight/2 + paddleBuffer, Math.min(courtRef.current.getTop() - paddleHeight/2 - paddleBuffer, newY));
       }
       return newY;
     });
-  }, [topWallRef, bottomWallRef]);
+  }, [courtRef]);
 
   useEffect(() => {
-    const handleMouseWheel = (event) => movePaddle(event.deltaY / 100);
+    const handleMouseWheel = (event) => {
+      movePaddle(event.deltaY / 100);
+    };
     const handleKeyDown = (event) => {
       if (event.key === "ArrowUp") movePaddle(0.2);
       if (event.key === "ArrowDown") movePaddle(-0.2);
@@ -71,10 +71,7 @@ export const Paddle = forwardRef(({ control, paddleX, topWallRef, bottomWallRef,
       // Set new velocity
       const speed = Math.sqrt(ballVelocity[0] * ballVelocity[0] + ballVelocity[1] * ballVelocity[1]);
       return([(side === "right" ? -1 : 1) * Math.abs(speed * Math.cos(bounceAngle)),speed * -Math.sin(bounceAngle), 0]);
-    },
-    missedBall: (ballPosition) => {
-      return (side === "left" ? ballPosition[0] < paddleX - missBuffer: ballPosition[0] > paddleX + missBuffer);
-    }
+    }    
   }));
   return (
     <mesh ref={ref}{...props} position={[paddleX, paddleY, 0]}>
@@ -88,6 +85,5 @@ export const Paddle = forwardRef(({ control, paddleX, topWallRef, bottomWallRef,
 Paddle.propTypes = {
   control: PropTypes.oneOf(['mouse', 'keyboard']).isRequired,
   paddleX: PropTypes.number.isRequired,
-  topWallRef: PropTypes.object.isRequired,
-  bottomWallRef: PropTypes.object.isRequired,
+  courtRef: PropTypes.object.isRequired,
 };
