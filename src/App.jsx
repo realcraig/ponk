@@ -10,9 +10,9 @@ function App() {
       <OrthographicCamera makeDefault position={[0, 0, 1]} lookAt={[0, 0, 0]} zoom={100}/>
 
       {/* Lights */}
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[0, 0, 10]} intensity={0.5} />
-      <pointLight position={[0, 0, 2]} intensity={50} color="white" />
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[10, 0, 10]} intensity={0.5} />
+      <pointLight position={[10, 0, 2]} intensity={50} color="orange" />
 
       {/* Game */}
       <Game ref={gameRef} />
